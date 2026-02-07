@@ -1,10 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-source "$repo_root/tools/variables.sh"
-
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/../.." && pwd)"
+source "$repo_root/tools/variables.sh"
 project_dir="$repo_root/ConferenceHub"
 publish_dir="$project_dir/publish"
 package_path="$project_dir/app.zip"
