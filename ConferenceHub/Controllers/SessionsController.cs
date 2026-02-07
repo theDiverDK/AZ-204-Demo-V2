@@ -1,8 +1,10 @@
 using ConferenceHub.Models;
 using ConferenceHub.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
@@ -52,13 +54,23 @@ namespace ConferenceHub.Controllers
 
         // POST: Sessions/Register
         [HttpPost]
-        public async Task<IActionResult> Register(int sessionId, string attendeeName, string attendeeEmail)
+        [Authorize]
+        public async Task<IActionResult> Register(int sessionId)
         {
             var session = await _dataService.GetSessionByIdAsync(sessionId);
             if (session == null)
             {
                 return NotFound();
             }
+
+            var attendeeName = User.FindFirst("name")?.Value
+                ?? User.Identity?.Name
+                ?? "Unknown attendee";
+
+            var attendeeEmail = User.FindFirst(ClaimTypes.Email)?.Value
+                ?? User.FindFirst("preferred_username")?.Value
+                ?? User.Identity?.Name
+                ?? "unknown@local";
 
             if (session.CurrentRegistrations >= session.Capacity)
             {

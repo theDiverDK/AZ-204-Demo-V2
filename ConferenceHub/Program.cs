@@ -1,10 +1,29 @@
 using ConferenceHub.Services;
 using ConferenceHub.Models;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services
+    .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("OrganizerOnly", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireRole("Organizer");
+    });
+});
+
+builder.Services
+    .AddControllersWithViews()
+    .AddMicrosoftIdentityUI();
+
 builder.Services.Configure<CosmosDbConfig>(
     builder.Configuration.GetSection("CosmosDb"));
 builder.Services.AddSingleton<IDataService, CosmosDataService>();
@@ -33,6 +52,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

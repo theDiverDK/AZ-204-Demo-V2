@@ -1,9 +1,11 @@
 using ConferenceHub.Models;
 using ConferenceHub.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConferenceHub.Controllers
 {
+    [Authorize(Policy = "OrganizerOnly")]
     public class OrganizerController : Controller
     {
         private readonly IDataService _dataService;
