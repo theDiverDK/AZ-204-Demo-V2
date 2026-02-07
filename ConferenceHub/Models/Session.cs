@@ -11,5 +11,6 @@ namespace ConferenceHub.Models
         public string Description { get; set; } = string.Empty;
         public int Capacity { get; set; }
         public int CurrentRegistrations { get; set; }
+        public List<string> SlideUrls { get; set; } = new();
     }
 }

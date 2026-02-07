@@ -17,6 +17,22 @@
             <h2 class="mb-0">Edit Session</h2>
         </div>
         <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
             <form asp-action="Edit" method="post">
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="CurrentRegistrations" />
@@ -78,6 +94,33 @@
                     </button>
                 </div>
             </form>
+
+            <hr class="my-4" />
+
+            <h4>Upload Session Slides</h4>
+            <form asp-action="UploadSlides" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="slides" class="form-label">Select PDF/JPG files</label>
+                    <input id="slides" name="slides" class="form-control" type="file" accept=".pdf,.jpg,.jpeg" multiple />
+                </div>
+                <button type="submit" class="btn btn-outline-primary">Upload Slides</button>
+            </form>
+
+            @if (Model.SlideUrls != null && Model.SlideUrls.Any())
+            {
+                <div class="mt-4">
+                    <h5>Uploaded Slides (@Model.SlideUrls.Count)</h5>
+                    <ul class="list-group">
+                        @for (var i = 0; i < Model.SlideUrls.Count; i++)
+                        {
+                            var slideUrl = Model.SlideUrls[i];
+                            <li class="list-group-item">
+                                <a href="@slideUrl" target="_blank" rel="noopener noreferrer">Slide @(i + 1)</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
         </div>
     </div>
 </div>

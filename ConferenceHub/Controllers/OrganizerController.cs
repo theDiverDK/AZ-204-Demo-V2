@@ -7,10 +7,13 @@ namespace ConferenceHub.Controllers
     public class OrganizerController : Controller
     {
         private readonly IDataService _dataService;
+        private readonly ISlideStorageService _slideStorageService;
+        private static readonly string[] AllowedSlideExtensions = [".pdf", ".jpg", ".jpeg"];
 
-        public OrganizerController(IDataService dataService)
+        public OrganizerController(IDataService dataService, ISlideStorageService slideStorageService)
         {
             _dataService = dataService;
+            _slideStorageService = slideStorageService;
         }
 
         // GET: Organizer
@@ -36,6 +39,7 @@ namespace ConferenceHub.Controllers
             if (ModelState.IsValid)
             {
                 session.CurrentRegistrations = 0;
+                session.SlideUrls ??= new List<string>();
                 await _dataService.AddSessionAsync(session);
                 TempData["Success"] = "Session created successfully!";
                 return RedirectToAction(nameof(Index));
@@ -66,11 +70,47 @@ namespace ConferenceHub.Controllers
 
             if (ModelState.IsValid)
             {
+                var existingSession = await _dataService.GetSessionByIdAsync(id);
+                if (existingSession == null)
+                {
+                    return NotFound();
+                }
+
+                session.SlideUrls = existingSession.SlideUrls;
                 await _dataService.UpdateSessionAsync(session);
                 TempData["Success"] = "Session updated successfully!";
                 return RedirectToAction(nameof(Index));
             }
             return View(session);
+        }
+
+        // POST: Organizer/UploadSlides/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadSlides(int id, List<IFormFile> slides)
+        {
+            var session = await _dataService.GetSessionByIdAsync(id);
+            if (session == null)
+            {
+                return NotFound();
+            }
+
+            var validSlides = slides
+                .Where(s => s.Length > 0 && AllowedSlideExtensions.Contains(Path.GetExtension(s.FileName).ToLowerInvariant()))
+                .ToList();
+
+            if (!validSlides.Any())
+            {
+                TempData["Error"] = "No valid slides selected. Allowed file types: PDF, JPG, JPEG.";
+                return RedirectToAction(nameof(Edit), new { id });
+            }
+
+            var uploadedUrls = await _slideStorageService.UploadSlidesAsync(id, validSlides);
+            session.SlideUrls.AddRange(uploadedUrls);
+            await _dataService.UpdateSessionAsync(session);
+
+            TempData["Success"] = $"Uploaded {uploadedUrls.Count} slide(s) successfully.";
+            return RedirectToAction(nameof(Edit), new { id });
         }
 
         // GET: Organizer/Delete/5

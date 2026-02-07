@@ -6,6 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IDataService, DataService>();
+builder.Services.Configure<SlideStorageConfig>(
+    builder.Configuration.GetSection("SlideStorage"));
+builder.Services.AddSingleton<ISlideStorageService, SlideStorageService>();
 
 // Configure Azure Functions settings
 builder.Services.Configure<AzureFunctionsConfig>(

@@ -54,6 +54,26 @@
                         <p><i class="bi bi-geo-alt"></i> @Model.Room</p>
                     </div>
 
+                    @if (Model.SlideUrls != null && Model.SlideUrls.Any())
+                    {
+                        <div class="mt-3">
+                            <h5>Session Slides</h5>
+                            <ul class="list-group">
+                                @for (var i = 0; i < Model.SlideUrls.Count; i++)
+                                {
+                                    var slideUrl = Model.SlideUrls[i];
+                                    var extension = System.IO.Path.GetExtension(slideUrl).ToLowerInvariant();
+                                    var label = extension == ".pdf" ? "PDF" : "Image";
+                                    <li class="list-group-item">
+                                        <a href="@slideUrl" target="_blank" rel="noopener noreferrer">
+                                            Slide @(i + 1) (@label)
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
                     <div class="mt-3">
                         <h5>Capacity</h5>
                         <div class="progress" style="height: 25px;">
