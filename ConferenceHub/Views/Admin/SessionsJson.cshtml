@@ -1,0 +1,40 @@
+@model ConferenceHub.Models.AdminSessionsJsonViewModel
+
+@{
+    ViewData["Title"] = "Sessions JSON";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-1">Sessions JSON</h1>
+        <div class="text-muted small">Seed data from the application package</div>
+    </div>
+    <span class="badge bg-secondary">Admin</span>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div><strong>Path:</strong> @Model.FilePath</div>
+        @if (Model.LastModifiedUtc.HasValue)
+        {
+            <div><strong>Last modified (UTC):</strong> @Model.LastModifiedUtc.Value.ToString("u")</div>
+        }
+        @if (Model.SizeBytes.HasValue)
+        {
+            <div><strong>Size:</strong> @Model.SizeBytes.Value bytes</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Error))
+        {
+            <div class="alert alert-danger mt-3 mb-0">@Model.Error</div>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Content))
+{
+    <div class="card">
+        <div class="card-body">
+            <pre class="mb-0"><code>@Model.Content</code></pre>
+        </div>
+    </div>
+}

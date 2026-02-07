@@ -1,0 +1,99 @@
+@model IEnumerable<ConferenceHub.Models.Session>
+
+@{
+    ViewData["Title"] = "Organizer Dashboard";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Organizer Dashboard</h1>
+        <div>
+            <a asp-action="Registrations" class="btn btn-info me-2">
+                <i class="bi bi-list-check"></i> View Registrations (@ViewBag.TotalRegistrations)
+            </a>
+            <a asp-action="Create" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Create New Session
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Manage Sessions</h4>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Speaker</th>
+                                <th>Date & Time</th>
+                                <th>Room</th>
+                                <th>Capacity</th>
+                                <th>Registrations</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var session in Model)
+                            {
+                                <tr>
+                                    <td>@session.Title</td>
+                                    <td>@session.Speaker</td>
+                                    <td>
+                                        @session.StartTime.ToString("MMM dd, yyyy")<br />
+                                        <small class="text-muted">@session.StartTime.ToString("h:mm tt") - @session.EndTime.ToString("h:mm tt")</small>
+                                    </td>
+                                    <td>@session.Room</td>
+                                    <td>@session.Capacity</td>
+                                    <td>
+                                        @{
+                                            var percentage = session.Capacity > 0 ? (session.CurrentRegistrations * 100.0 / session.Capacity) : 0;
+                                            var badgeClass = percentage >= 90 ? "bg-danger" : percentage >= 70 ? "bg-warning" : "bg-success";
+                                        }
+                                        <span class="badge @badgeClass">@session.CurrentRegistrations / @session.Capacity</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Edit" asp-route-id="@session.Id" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@session.Id" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <h5>No sessions yet</h5>
+                    <p>Create your first session to get started.</p>
+                    <a asp-action="Create" class="btn btn-success">Create Session</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a asp-controller="Sessions" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-eye"></i> View Public Sessions Page
+        </a>
+    </div>
+</div>

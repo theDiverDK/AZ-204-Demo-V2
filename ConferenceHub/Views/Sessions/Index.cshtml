@@ -1,0 +1,53 @@
+@model IEnumerable<ConferenceHub.Models.Session>
+
+@{
+    ViewData["Title"] = "Conference Sessions";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Conference Sessions</h1>
+        <a asp-controller="Organizer" asp-action="Index" class="btn btn-primary">Manage Sessions</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        @foreach (var session in Model)
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@session.Title</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            <i class="bi bi-person"></i> @session.Speaker
+                        </h6>
+                        <p class="card-text">@session.Description</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-clock"></i> @session.StartTime.ToString("MMM dd, yyyy") at @session.StartTime.ToString("h:mm tt") - @session.EndTime.ToString("h:mm tt")</li>
+                            <li><i class="bi bi-geo-alt"></i> @session.Room</li>
+                            <li><i class="bi bi-people"></i> @session.CurrentRegistrations / @session.Capacity attendees</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a asp-action="Details" asp-route-id="@session.Id" class="btn btn-outline-primary">View Details & Register</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <h4>No sessions available</h4>
+            <p>Check back later for upcoming conference sessions.</p>
+        </div>
+    }
+</div>

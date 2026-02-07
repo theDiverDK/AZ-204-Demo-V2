@@ -1,0 +1,90 @@
+[
+  {
+    "Id": 1,
+    "Title": "Building Cloud-Native Applications with Azure",
+    "Speaker": "Sarah Johnson",
+    "StartTime": "2025-12-01T09:00:00",
+    "EndTime": "2025-12-01T10:30:00",
+    "Room": "Main Hall A",
+    "Description": "Learn how to build scalable cloud-native applications using Azure services. This session covers App Service, Azure Functions, and best practices for cloud architecture.",
+    "Capacity": 100,
+    "CurrentRegistrations": 0
+  },
+  {
+    "Id": 2,
+    "Title": "Azure Storage Solutions Deep Dive",
+    "Speaker": "Michael Chen",
+    "StartTime": "2025-12-01T09:00:00",
+    "EndTime": "2025-12-01T10:30:00",
+    "Room": "Room 201",
+    "Description": "Explore Azure Blob Storage, Table Storage, Queue Storage, and Cosmos DB. Learn when to use each storage type and how to optimize for performance and cost.",
+    "Capacity": 75,
+    "CurrentRegistrations": 0
+  },
+  {
+    "Id": 3,
+    "Title": "Securing Your Azure Applications",
+    "Speaker": "Emily Rodriguez",
+    "StartTime": "2025-12-01T11:00:00",
+    "EndTime": "2025-12-01T12:30:00",
+    "Room": "Main Hall A",
+    "Description": "Security best practices for Azure applications including Key Vault, Managed Identities, and Azure Active Directory integration.",
+    "Capacity": 100,
+    "CurrentRegistrations": 0
+  },
+  {
+    "Id": 4,
+    "Title": "Implementing Azure Functions and Logic Apps",
+    "Speaker": "David Kim",
+    "StartTime": "2025-12-01T11:00:00",
+    "EndTime": "2025-12-01T12:30:00",
+    "Room": "Room 201",
+    "Description": "Hands-on session covering serverless computing with Azure Functions and workflow automation with Logic Apps.",
+    "Capacity": 60,
+    "CurrentRegistrations": 0
+  },
+  {
+    "Id": 5,
+    "Title": "Containerization with Azure Container Instances",
+    "Speaker": "Jessica Martinez",
+    "StartTime": "2025-12-01T14:00:00",
+    "EndTime": "2025-12-01T15:30:00",
+    "Room": "Main Hall A",
+    "Description": "Introduction to containerization concepts and deploying containers to Azure Container Instances and Azure Kubernetes Service.",
+    "Capacity": 80,
+    "CurrentRegistrations": 0
+  },
+  {
+    "Id": 6,
+    "Title": "API Management and Integration Patterns",
+    "Speaker": "Robert Taylor",
+    "StartTime": "2025-12-01T14:00:00",
+    "EndTime": "2025-12-01T15:30:00",
+    "Room": "Room 201",
+    "Description": "Learn how to manage, secure, and monitor your APIs using Azure API Management. Covers policies, rate limiting, and authentication.",
+    "Capacity": 70,
+    "CurrentRegistrations": 0
+  },
+  {
+    "Id": 7,
+    "Title": "Monitoring and Diagnostics with Application Insights",
+    "Speaker": "Amanda White",
+    "StartTime": "2025-12-01T16:00:00",
+    "EndTime": "2025-12-01T17:30:00",
+    "Room": "Main Hall A",
+    "Description": "Master Application Insights for monitoring application performance, tracking custom events, and setting up alerts for your Azure applications.",
+    "Capacity": 100,
+    "CurrentRegistrations": 0
+  },
+  {
+    "Id": 8,
+    "Title": "Event-Driven Architecture with Azure Event Grid",
+    "Speaker": "James Anderson",
+    "StartTime": "2025-12-01T16:00:00",
+    "EndTime": "2025-12-01T17:30:00",
+    "Room": "Room 201",
+    "Description": "Build reactive applications using Azure Event Grid, Service Bus, and Event Hubs. Learn about event-driven patterns and message processing.",
+    "Capacity": 65,
+    "CurrentRegistrations": 0
+  }
+]

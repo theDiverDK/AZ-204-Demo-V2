@@ -1,0 +1,109 @@
+@model ConferenceHub.Models.Session
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Sessions" asp-action="Index">Sessions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+        </ol>
+    </nav>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="mb-0">@Model.Title</h1>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4 class="mb-3">Session Details</h4>
+                    <p class="lead">@Model.Description</p>
+
+                    <div class="mt-4">
+                        <h5>Speaker</h5>
+                        <p class="text-muted"><i class="bi bi-person-circle"></i> @Model.Speaker</p>
+                    </div>
+
+                    <div class="mt-3">
+                        <h5>Schedule</h5>
+                        <p><i class="bi bi-calendar-event"></i> @Model.StartTime.ToString("MMMM dd, yyyy")</p>
+                        <p><i class="bi bi-clock"></i> @Model.StartTime.ToString("h:mm tt") - @Model.EndTime.ToString("h:mm tt")</p>
+                    </div>
+
+                    <div class="mt-3">
+                        <h5>Location</h5>
+                        <p><i class="bi bi-geo-alt"></i> @Model.Room</p>
+                    </div>
+
+                    <div class="mt-3">
+                        <h5>Capacity</h5>
+                        <div class="progress" style="height: 25px;">
+                            @{
+                                var percentage = Model.Capacity > 0 ? (Model.CurrentRegistrations * 100.0 / Model.Capacity) : 0;
+                                var progressClass = percentage >= 90 ? "bg-danger" : percentage >= 70 ? "bg-warning" : "bg-success";
+                            }
+                            <div class="progress-bar @progressClass" role="progressbar" style="width: @percentage%" aria-valuenow="@Model.CurrentRegistrations" aria-valuemin="0" aria-valuemax="@Model.Capacity">
+                                @Model.CurrentRegistrations / @Model.Capacity
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">Register for this Session</h5>
+                            @if (Model.CurrentRegistrations < Model.Capacity)
+                            {
+                                <form asp-action="Register" method="post">
+                                    <input type="hidden" name="sessionId" value="@Model.Id" />
+                                    <div class="mb-3">
+                                        <label for="attendeeName" class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="attendeeName" name="attendeeName" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="attendeeEmail" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="attendeeEmail" name="attendeeEmail" required />
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="bi bi-check-circle"></i> Register Now
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-triangle"></i> This session is full
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Sessions
+            </a>
+        </div>
+    </div>
+</div>

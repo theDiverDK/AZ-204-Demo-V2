@@ -1,0 +1,67 @@
+@model ConferenceHub.Models.Session
+
+@{
+    ViewData["Title"] = "Delete Session";
+}
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Organizer Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Delete Session</li>
+        </ol>
+    </nav>
+
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h2 class="mb-0">Delete Session</h2>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <h4><i class="bi bi-exclamation-triangle"></i> Warning</h4>
+                <p>Are you sure you want to delete this session? This action cannot be undone.</p>
+            </div>
+
+            <h4>@Model.Title</h4>
+            <dl class="row">
+                <dt class="col-sm-3">Speaker</dt>
+                <dd class="col-sm-9">@Model.Speaker</dd>
+
+                <dt class="col-sm-3">Date & Time</dt>
+                <dd class="col-sm-9">
+                    @Model.StartTime.ToString("MMMM dd, yyyy") at @Model.StartTime.ToString("h:mm tt") - @Model.EndTime.ToString("h:mm tt")
+                </dd>
+
+                <dt class="col-sm-3">Room</dt>
+                <dd class="col-sm-9">@Model.Room</dd>
+
+                <dt class="col-sm-3">Capacity</dt>
+                <dd class="col-sm-9">@Model.Capacity</dd>
+
+                <dt class="col-sm-3">Current Registrations</dt>
+                <dd class="col-sm-9">
+                    <span class="badge bg-info">@Model.CurrentRegistrations</span>
+                    @if (Model.CurrentRegistrations > 0)
+                    {
+                        <span class="text-danger ms-2">⚠️ Attendees have registered for this session</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">Description</dt>
+                <dd class="col-sm-9">@Model.Description</dd>
+            </dl>
+
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete Session
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

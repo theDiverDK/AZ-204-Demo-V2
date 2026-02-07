@@ -1,0 +1,68 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="display-3 fw-bold text-primary">
+            <i class="bi bi-calendar-event"></i> Welcome to ConferenceHub
+        </h1>
+        <p class="lead text-muted">Your gateway to the premier tech conference experience</p>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 text-center border-primary">
+                <div class="card-body">
+                    <i class="bi bi-calendar-check display-1 text-primary mb-3"></i>
+                    <h3 class="card-title">Browse Sessions</h3>
+                    <p class="card-text">Explore our comprehensive lineup of technical sessions, workshops, and keynotes from industry experts.</p>
+                    <a asp-controller="Sessions" asp-action="Index" class="btn btn-primary">View Sessions</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 text-center border-success">
+                <div class="card-body">
+                    <i class="bi bi-person-check display-1 text-success mb-3"></i>
+                    <h3 class="card-title">Register</h3>
+                    <p class="card-text">Sign up for sessions that interest you. Seats are limited, so register early to secure your spot!</p>
+                    <a asp-controller="Sessions" asp-action="Index" class="btn btn-success">Register Now</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 text-center border-warning">
+                <div class="card-body">
+                    <i class="bi bi-gear display-1 text-warning mb-3"></i>
+                    <h3 class="card-title">Organizer Tools</h3>
+                    <p class="card-text">Manage sessions, track registrations, and keep the conference running smoothly with our organizer dashboard.</p>
+                    <a asp-controller="Organizer" asp-action="Index" class="btn btn-warning">Manage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="bi bi-info-circle"></i> About the Conference</h3>
+                    <p class="card-text">
+                        Join us for an exciting lineup of technical sessions covering the latest in cloud computing, 
+                        software development, and Azure technologies. Connect with industry leaders, learn cutting-edge 
+                        techniques, and network with fellow technology enthusiasts.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle text-success"></i> Expert speakers from leading tech companies</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Hands-on workshops and demonstrations</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Networking opportunities with peers</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Q&A sessions with presenters</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
