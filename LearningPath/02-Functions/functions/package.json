@@ -1,7 +1,0 @@
-{
-  "name": "conferencehub-functions",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Learning Path 2 Azure Functions for ConferenceHub",
-  "main": "index.js"
-}
