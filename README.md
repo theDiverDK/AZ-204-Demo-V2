@@ -19,77 +19,119 @@ Clone once, then switch branches as you progress.
 ```bash
 git clone https://github.com/theDiverDK/AZ-204-Demo.git
 cd AZ-204-Demo
+git fetch --all --prune
 ```
 
 Run learning paths in this order:
 
 1. `lp/01-init`
+This creates the baseline Azure hosting for ConferenceHub (resource group, plan, web app) and deploys the app.
+Use this as the starting point for all later paths.
+Test by opening the site, browsing sessions, and submitting one registration.
 ```bash
-git checkout lp/01-init
-cd LearningPath/01-Init && ./create.sh
+git switch --track origin/lp/01-init
+cd LearningPath/01-Init
+./create.sh
 cd ../..
 ```
 
 2. `lp/02-functions`
+This adds Azure Functions for confirmation handling and updates the web app to call the function endpoint.
+Registrations now go through the function flow instead of only local app logic.
+Test by registering and checking Function App logs for the confirmation payload.
 ```bash
-git checkout lp/02-functions
-cd LearningPath/02-Functions && ./create.sh
+git switch lp/02-functions || git switch --track origin/lp/02-functions
+cd LearningPath/02-Functions
+./create.sh
 cd ../..
 ```
 
 3. `lp/03-storage`
+This adds Blob Storage support for session slide uploads (multiple files per session).
+Organizer uploads are stored in Azure Storage and linked from session details.
+Test by uploading PDF/JPG slides as organizer and opening links from the session page.
 ```bash
-git checkout lp/03-storage
-cd LearningPath/03-Storage && ./create.sh
+git switch lp/03-storage || git switch --track origin/lp/03-storage
+cd LearningPath/03-Storage
+./create.sh
 cd ../..
 ```
 
 4. `lp/04-cosmos`
+This switches data persistence to Cosmos DB for sessions and registrations.
+The migration step imports existing seed sessions so the app can run immediately on Cosmos.
+Test by registering users and verifying data/count changes in Cosmos containers.
 ```bash
-git checkout lp/04-cosmos
-cd LearningPath/04-Cosmos && ./create.sh && ./migrate.sh
+git switch lp/04-cosmos || git switch --track origin/lp/04-cosmos
+cd LearningPath/04-Cosmos
+./create.sh
+./migrate.sh
 cd ../..
 ```
 
 5. `lp/05-container`
+This demonstrates container-based deployment for the web app.
+The script builds/publishes and deploys ConferenceHub in container hosting configuration.
+Test by opening the deployed app and verifying normal browse/register behavior.
 ```bash
-git checkout lp/05-container
-cd LearningPath/05-Container && ./create.sh
+git switch lp/05-container || git switch --track origin/lp/05-container
+cd LearningPath/05-Container
+./create.sh
 cd ../..
 ```
 
 6. `lp/06-auth`
+This enables Microsoft Entra ID authentication and role-based authorization.
+Registration requires login, and organizer-only features are restricted by role.
+Test by signing in as user vs organizer and confirming UI/action differences.
 ```bash
-git checkout lp/06-auth
-cd LearningPath/06-Auth && ./create.sh
+git switch lp/06-auth || git switch --track origin/lp/06-auth
+cd LearningPath/06-Auth
+./create.sh
 cd ../..
 ```
 
 7. `lp/07-keyvault`
+This moves sensitive settings to Azure Key Vault and uses managed identity + RBAC access.
+App secrets are resolved from Key Vault references instead of plain app settings values.
+Test by confirming app still works and Key Vault reference resolution is successful in web app settings.
 ```bash
-git checkout lp/07-keyvault
-cd LearningPath/07-KeyVault && ./create.sh
+git switch lp/07-keyvault || git switch --track origin/lp/07-keyvault
+cd LearningPath/07-KeyVault
+./create.sh
 cd ../..
 ```
 
 8. `lp/09-events`
+This introduces event-driven behavior with Event Grid/Event Hub integrations.
+Events are emitted and processed when app actions occur (for example slide-related activity).
+Test by triggering event-producing actions and validating downstream processing/logs.
 ```bash
-git checkout lp/09-events
-cd LearningPath/09-Events && ./create.sh
+git switch lp/09-events || git switch --track origin/lp/09-events
+cd LearningPath/09-Events
+./create.sh
 cd ../..
 ```
 
 9. `lp/10-messages`
+This adds asynchronous messaging with Service Bus and Queue Storage.
+Work is decoupled into message handlers (for example registration email flow and thumbnail jobs).
+Test by performing actions that enqueue messages and verifying consumers process them.
 ```bash
-git checkout lp/10-messages
-cd LearningPath/10-Messages && ./create.sh
+git switch lp/10-messages || git switch --track origin/lp/10-messages
+cd LearningPath/10-Messages
+./create.sh
 cd ../..
 ```
 
 10. `lp/11-appinsight`
+This enables full observability with Application Insights across app and functions.
+Dependency/custom telemetry and distributed traces are configured for end-to-end visibility.
+Test by running core flows, then confirming traces/dependencies in Application Map and Logs.
 ```bash
-git checkout lp/11-appinsight
-cd LearningPath/11-AppInsight && ./create.sh
+git switch lp/11-appinsight || git switch --track origin/lp/11-appinsight
+cd LearningPath/11-AppInsight
+./create.sh
 cd ../..
 ```
 
