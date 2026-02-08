@@ -17,7 +17,7 @@ slides_storage_connection_string=""
 function_key=""
 entra_client_secret=""
 
-current_user_id="$(az ad signed-in-user show --query id -o tsv)"
+current_user_id="$(az ad signed-in-user show --query id -o tsv || true)"
 
 app_id="$(az ad app list --display-name "$entra_app_registration_name" --query "[0].appId" -o tsv)"
 if [[ -z "$app_id" ]]; then
@@ -47,13 +47,15 @@ az keyvault update \
 
 key_vault_id="$(az keyvault show --name "$key_vault_name" --resource-group "$resource_group_name" --query id -o tsv)"
 
-role_assignment_id="$(az role assignment list --assignee-object-id "$current_user_id" --scope "$key_vault_id" --role "Key Vault Secrets Officer" --query "[0].id" -o tsv)"
-if [[ -z "$role_assignment_id" ]]; then
-  az role assignment create \
-    --assignee-object-id "$current_user_id" \
-    --assignee-principal-type User \
-    --role "Key Vault Secrets Officer" \
-    --scope "$key_vault_id"
+if [[ -n "$current_user_id" ]]; then
+  role_assignment_id="$(az role assignment list --assignee-object-id "$current_user_id" --scope "$key_vault_id" --role "Key Vault Secrets Officer" --query "[0].id" -o tsv || true)"
+  if [[ -z "$role_assignment_id" ]]; then
+    az role assignment create \
+      --assignee-object-id "$current_user_id" \
+      --assignee-principal-type User \
+      --role "Key Vault Secrets Officer" \
+      --scope "$key_vault_id"
+  fi
 fi
 
 cosmos_key="$(az cosmosdb keys list \
@@ -74,7 +76,15 @@ function_key="$(az functionapp keys list \
   --resource-group "$resource_group_name" \
   --name "$function_app_name" \
   --query "functionKeys.${function_key_name}" \
-  -o tsv)"
+  -o tsv || true)"
+
+if [[ -z "$function_key" ]]; then
+  function_key="$(az functionapp keys list \
+    --resource-group "$resource_group_name" \
+    --name "$function_app_name" \
+    --query "masterKey" \
+    -o tsv || true)"
+fi
 
 entra_client_secret="$(az ad app credential reset \
   --id "$app_id" \
@@ -109,14 +119,24 @@ web_principal_id="$(az webapp identity assign \
   --query principalId \
   -o tsv)"
 
-role_assignment_id="$(az role assignment list --assignee-object-id "$web_principal_id" --scope "$key_vault_id" --role "Key Vault Secrets User" --query "[0].id" -o tsv)"
-if [[ -z "$role_assignment_id" ]]; then
-  az role assignment create \
+role_assignment_id=""
+for attempt in {1..12}; do
+  role_assignment_id="$(az role assignment list --assignee-object-id "$web_principal_id" --scope "$key_vault_id" --role "Key Vault Secrets User" --query "[0].id" -o tsv || true)"
+  if [[ -n "$role_assignment_id" ]]; then
+    break
+  fi
+
+  if az role assignment create \
     --assignee-object-id "$web_principal_id" \
     --assignee-principal-type ServicePrincipal \
     --role "Key Vault Secrets User" \
-    --scope "$key_vault_id"
-fi
+    --scope "$key_vault_id"; then
+    break
+  fi
+
+  echo "Waiting for web app managed identity to propagate (attempt $attempt/12)..."
+  sleep 10
+done
 
 az webapp config appsettings set \
   --resource-group "$resource_group_name" \
