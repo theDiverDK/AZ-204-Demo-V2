@@ -2,7 +2,9 @@ using System.Text.Json;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
 using ConferenceHub.Models;
+using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
 namespace ConferenceHub.Services
 {
@@ -14,11 +16,19 @@ namespace ConferenceHub.Services
     public class EventTelemetryService : IEventTelemetryService
     {
         private readonly EventHubConfig _config;
+        private readonly TelemetryClient _telemetryClient;
+        private readonly IKeyVaultTelemetryService _keyVaultTelemetryService;
         private readonly ILogger<EventTelemetryService> _logger;
 
-        public EventTelemetryService(IOptions<EventHubConfig> config, ILogger<EventTelemetryService> logger)
+        public EventTelemetryService(
+            IOptions<EventHubConfig> config,
+            TelemetryClient telemetryClient,
+            IKeyVaultTelemetryService keyVaultTelemetryService,
+            ILogger<EventTelemetryService> logger)
         {
             _config = config.Value;
+            _telemetryClient = telemetryClient;
+            _keyVaultTelemetryService = keyVaultTelemetryService;
             _logger = logger;
         }
 
@@ -32,8 +42,12 @@ namespace ConferenceHub.Services
 
             try
             {
+                await _keyVaultTelemetryService.ProbeAsync("EventHubPublish");
+
                 await using var producer = new EventHubProducerClient(_config.ConnectionString, _config.HubName);
                 using var batch = await producer.CreateBatchAsync();
+                var startTime = DateTimeOffset.UtcNow;
+                var sw = Stopwatch.StartNew();
 
                 var envelope = new
                 {
@@ -50,9 +64,21 @@ namespace ConferenceHub.Services
                 }
 
                 await producer.SendAsync(batch);
+                _telemetryClient.TrackDependency("Azure Event Hubs", _config.HubName, "Publish", eventName, startTime, sw.Elapsed, "OK", true);
+                _telemetryClient.TrackEvent("EventHubMessagePublished", new Dictionary<string, string>
+                {
+                    ["EventName"] = eventName,
+                    ["HubName"] = _config.HubName
+                });
             }
             catch (Exception ex)
             {
+                _telemetryClient.TrackEvent("EventHubMessagePublishFailed", new Dictionary<string, string>
+                {
+                    ["EventName"] = eventName,
+                    ["HubName"] = _config.HubName,
+                    ["Error"] = ex.Message
+                });
                 _logger.LogError(ex, "Failed to send event telemetry for {EventName}", eventName);
             }
         }

@@ -82,3 +82,6 @@ servicebus_subscription_name="email-worker"
 servicebus_auth_rule_name="conferencehub-messaging"
 thumbnail_queue_name="slide-thumbnail-jobs"
 kv_secret_servicebus_connection_string_name="servicebus-connection-string"
+
+# LP11 App Insights variables
+app_insights_component_name=""

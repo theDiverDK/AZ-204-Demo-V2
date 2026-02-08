@@ -1,6 +1,8 @@
 using System.Text.Json;
+using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace ConferenceHub.Functions;
 
@@ -15,10 +17,14 @@ public sealed class RegistrationMessageFunction
 
     [Function("ProcessRegistrationMessage")]
     public void Run(
-        [ServiceBusTrigger("%ServiceBusTopicName%", "%ServiceBusSubscriptionName%", Connection = "ServiceBusConnection")] string message)
+        [ServiceBusTrigger("%ServiceBusTopicName%", "%ServiceBusSubscriptionName%", Connection = "ServiceBusConnection")] ServiceBusReceivedMessage message)
     {
+        var traceParent = GetTraceParent(message);
+        using var activity = StartConsumerActivity("ProcessRegistrationMessage", traceParent);
+
+        _logger.LogInformation("SERVICEBUS_MESSAGE_RECEIVED");
         var payload = JsonSerializer.Deserialize<RegistrationPayload>(
-            message,
+            message.Body.ToString(),
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new RegistrationPayload();
 
         var sender = Environment.GetEnvironmentVariable("CONFIRMATION_SENDER_EMAIL") ?? "noreply@conferencehub.local";
@@ -32,6 +38,32 @@ public sealed class RegistrationMessageFunction
         _logger.LogInformation("Receiver: {Receiver}", receiver);
         _logger.LogInformation("Subject: {Subject}", subject);
         _logger.LogInformation("Body: {Body}", body);
+    }
+
+    private static string? GetTraceParent(ServiceBusReceivedMessage message)
+    {
+        if (message.ApplicationProperties.TryGetValue("traceparent", out var traceParentObj))
+        {
+            return traceParentObj?.ToString();
+        }
+
+        if (message.ApplicationProperties.TryGetValue("Diagnostic-Id", out var diagnosticIdObj))
+        {
+            return diagnosticIdObj?.ToString();
+        }
+
+        return null;
+    }
+
+    private static Activity? StartConsumerActivity(string name, string? traceParent)
+    {
+        var activity = new Activity(name);
+        if (!string.IsNullOrWhiteSpace(traceParent))
+        {
+            activity.SetParentId(traceParent);
+        }
+
+        return activity.Start();
     }
 
     private sealed class RegistrationPayload

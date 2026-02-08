@@ -7,6 +7,11 @@ using Microsoft.Identity.Web.UI;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    options.EnableAdaptiveSampling = false;
+});
+
 builder.Services
     .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
@@ -39,6 +44,9 @@ builder.Services.AddSingleton<IRegistrationMessagePublisher, RegistrationMessage
 builder.Services.Configure<ThumbnailQueueConfig>(
     builder.Configuration.GetSection("ThumbnailQueue"));
 builder.Services.AddSingleton<IThumbnailJobQueueService, ThumbnailJobQueueService>();
+builder.Services.Configure<KeyVaultTelemetryConfig>(
+    builder.Configuration.GetSection("KeyVaultTelemetry"));
+builder.Services.AddSingleton<IKeyVaultTelemetryService, KeyVaultTelemetryService>();
 
 // Configure Azure Functions settings
 builder.Services.Configure<AzureFunctionsConfig>(

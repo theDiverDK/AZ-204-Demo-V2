@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
+using System.Diagnostics;
 
 namespace ConferenceHub.Functions;
 
@@ -23,6 +24,7 @@ public sealed class ThumbnailQueueFunction
     {
         try
         {
+            _logger.LogInformation("QUEUE_MESSAGE_RECEIVED");
             _logger.LogInformation("Processing thumbnail queue message: {QueueMessage}", queueMessage);
 
             var job = DeserializePayload(queueMessage);
@@ -31,6 +33,8 @@ public sealed class ThumbnailQueueFunction
             {
                 throw new InvalidOperationException("Thumbnail queue message is empty or invalid.");
             }
+
+            using var activity = StartConsumerActivity("ProcessSlideThumbnailJob", job.TraceParent);
 
             var extension = Path.GetExtension(job.SlideUrl).ToLowerInvariant();
             if (extension != ".jpg" && extension != ".jpeg" && extension != ".png")
@@ -128,5 +132,17 @@ public sealed class ThumbnailQueueFunction
     {
         public int SessionId { get; set; }
         public string? SlideUrl { get; set; }
+        public string? TraceParent { get; set; }
+    }
+
+    private static Activity? StartConsumerActivity(string name, string? traceParent)
+    {
+        var activity = new Activity(name);
+        if (!string.IsNullOrWhiteSpace(traceParent))
+        {
+            activity.SetParentId(traceParent);
+        }
+
+        return activity.Start();
     }
 }

@@ -1,6 +1,8 @@
 using ConferenceHub.Models;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
 namespace ConferenceHub.Services
 {
@@ -8,8 +10,9 @@ namespace ConferenceHub.Services
     {
         private readonly Container _sessionsContainer;
         private readonly Container _registrationsContainer;
+        private readonly TelemetryClient _telemetryClient;
 
-        public CosmosDataService(IOptions<CosmosDbConfig> config)
+        public CosmosDataService(IOptions<CosmosDbConfig> config, TelemetryClient telemetryClient)
         {
             var cfg = config.Value;
 
@@ -22,6 +25,7 @@ namespace ConferenceHub.Services
             var database = client.GetDatabase(cfg.DatabaseName);
             _sessionsContainer = database.GetContainer(cfg.SessionsContainerName);
             _registrationsContainer = database.GetContainer(cfg.RegistrationsContainerName);
+            _telemetryClient = telemetryClient;
         }
 
         public async Task<List<Session>> GetSessionsAsync()
@@ -123,50 +127,66 @@ namespace ConferenceHub.Services
             var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.SessionId = @sessionId")
                 .WithParameter("@sessionId", sessionId);
 
-            var iterator = _registrationsContainer.GetItemQueryIterator<int>(query);
-            if (iterator.HasMoreResults)
-            {
-                var page = await iterator.ReadNextAsync();
-                return page.FirstOrDefault();
-            }
-
-            return 0;
+            var counts = await QueryAllAsync<int>(_registrationsContainer, query);
+            return counts.FirstOrDefault();
         }
 
-        private static async Task<List<T>> QueryAllAsync<T>(Container container, string queryText)
+        private async Task<List<T>> QueryAllAsync<T>(Container container, string queryText)
         {
-            var iterator = container.GetItemQueryIterator<T>(new QueryDefinition(queryText));
-            var results = new List<T>();
-            while (iterator.HasMoreResults)
-            {
-                var page = await iterator.ReadNextAsync();
-                results.AddRange(page);
-            }
-            return results;
+            return await QueryAllAsync<T>(container, new QueryDefinition(queryText));
         }
 
-        private static async Task<List<T>> QueryAllAsync<T>(Container container, QueryDefinition query)
+        private async Task<List<T>> QueryAllAsync<T>(Container container, QueryDefinition query)
         {
-            var iterator = container.GetItemQueryIterator<T>(query);
-            var results = new List<T>();
-            while (iterator.HasMoreResults)
+            var startTime = DateTimeOffset.UtcNow;
+            var stopwatch = Stopwatch.StartNew();
+
+            try
             {
-                var page = await iterator.ReadNextAsync();
-                results.AddRange(page);
+                var iterator = container.GetItemQueryIterator<T>(query);
+                var results = new List<T>();
+                while (iterator.HasMoreResults)
+                {
+                    var page = await iterator.ReadNextAsync();
+                    results.AddRange(page);
+                }
+
+                TrackCosmosQuery(container.Id, query.QueryText, startTime, stopwatch.Elapsed, true, string.Empty);
+                return results;
             }
-            return results;
+            catch (Exception ex)
+            {
+                TrackCosmosQuery(container.Id, query.QueryText, startTime, stopwatch.Elapsed, false, ex.Message);
+                throw;
+            }
         }
 
-        private static async Task<int> GetNextIdAsync(Container container)
+        private async Task<int> GetNextIdAsync(Container container)
         {
-            var iterator = container.GetItemQueryIterator<int?>("SELECT VALUE MAX(c.Id) FROM c");
-            while (iterator.HasMoreResults)
+            var values = await QueryAllAsync<int?>(container, "SELECT VALUE MAX(c.Id) FROM c");
+            var max = values.FirstOrDefault();
+            return max.GetValueOrDefault() + 1;
+        }
+
+        private void TrackCosmosQuery(string containerName, string queryText, DateTimeOffset startTime, TimeSpan duration, bool success, string errorMessage)
+        {
+            _telemetryClient.TrackDependency(
+                dependencyTypeName: "Azure Cosmos DB",
+                target: containerName,
+                dependencyName: "Query",
+                data: queryText,
+                startTime: startTime,
+                duration: duration,
+                resultCode: success ? "OK" : "ERROR",
+                success: success);
+
+            _telemetryClient.TrackEvent("CosmosDbQueryExecuted", new Dictionary<string, string>
             {
-                var page = await iterator.ReadNextAsync();
-                var max = page.FirstOrDefault();
-                return max.GetValueOrDefault() + 1;
-            }
-            return 1;
+                ["Container"] = containerName,
+                ["Query"] = queryText,
+                ["Success"] = success.ToString(),
+                ["Error"] = errorMessage
+            });
         }
 
         private static Session ToSession(SessionDocument doc)

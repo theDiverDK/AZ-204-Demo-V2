@@ -15,6 +15,7 @@ public sealed class SlideUploadedEventFunction
     [Function("SlideUploadedEvent")]
     public void Run([EventGridTrigger] string eventGridEvent)
     {
+        _logger.LogInformation("EVENTGRID_EVENT_RECEIVED");
         _logger.LogInformation("Received Event Grid slide upload event: {EventPayload}", eventGridEvent);
     }
 }

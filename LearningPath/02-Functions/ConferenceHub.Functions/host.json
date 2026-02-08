@@ -8,7 +8,7 @@
   "logging": {
     "applicationInsights": {
       "samplingSettings": {
-        "isEnabled": true
+        "isEnabled": false
       }
     }
   }

@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Azure.Storage.Queues;
 using ConferenceHub.Models;
+using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
 namespace ConferenceHub.Services
 {
@@ -13,11 +15,19 @@ namespace ConferenceHub.Services
     public class ThumbnailJobQueueService : IThumbnailJobQueueService
     {
         private readonly ThumbnailQueueConfig _config;
+        private readonly TelemetryClient _telemetryClient;
+        private readonly IKeyVaultTelemetryService _keyVaultTelemetryService;
         private readonly ILogger<ThumbnailJobQueueService> _logger;
 
-        public ThumbnailJobQueueService(IOptions<ThumbnailQueueConfig> config, ILogger<ThumbnailJobQueueService> logger)
+        public ThumbnailJobQueueService(
+            IOptions<ThumbnailQueueConfig> config,
+            TelemetryClient telemetryClient,
+            IKeyVaultTelemetryService keyVaultTelemetryService,
+            ILogger<ThumbnailJobQueueService> logger)
         {
             _config = config.Value;
+            _telemetryClient = telemetryClient;
+            _keyVaultTelemetryService = keyVaultTelemetryService;
             _logger = logger;
         }
 
@@ -29,6 +39,8 @@ namespace ConferenceHub.Services
                 return;
             }
 
+            await _keyVaultTelemetryService.ProbeAsync("QueueEnqueue");
+
             var queue = new QueueClient(_config.ConnectionString, _config.QueueName);
             await queue.CreateIfNotExistsAsync();
 
@@ -37,10 +49,20 @@ namespace ConferenceHub.Services
                 var payload = JsonSerializer.Serialize(new
                 {
                     sessionId,
-                    slideUrl
+                    slideUrl,
+                    traceparent = Activity.Current?.Id
                 });
 
+                var startTime = DateTimeOffset.UtcNow;
+                var sw = Stopwatch.StartNew();
                 await queue.SendMessageAsync(payload);
+                _telemetryClient.TrackDependency("Azure Storage Queue", _config.QueueName, "Enqueue", "ThumbnailJob", startTime, sw.Elapsed, "OK", true);
+                _telemetryClient.TrackEvent("ThumbnailJobEnqueued", new Dictionary<string, string>
+                {
+                    ["Queue"] = _config.QueueName,
+                    ["SessionId"] = sessionId.ToString(),
+                    ["SlideUrl"] = slideUrl
+                });
             }
         }
     }
