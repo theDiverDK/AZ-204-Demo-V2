@@ -21,7 +21,7 @@ if ([string]::IsNullOrEmpty($app_id)) {
     Write-Host "Could not find Entra app registration '$entra_app_registration_name'. Run LP6 first."
     exit 1
 }
-$key_vault_existing_id = "$(az keyvault show  --name `"$key_vault_name`"  --resource-group `"$resource_group_name`"  --query id  -o tsv 2>/dev/null || true)"
+$key_vault_existing_id = "$(az keyvault list  --resource-group `"$resource_group_name`"  --query `"[?name=='$key_vault_name'] | [0].id`"  -o tsv)"
 if ([string]::IsNullOrEmpty($key_vault_existing_id)) {
     az keyvault create  --name "$key_vault_name"  --resource-group "$resource_group_name"  --location "$location"  --sku "$key_vault_sku"  --enable-rbac-authorization true
 }
