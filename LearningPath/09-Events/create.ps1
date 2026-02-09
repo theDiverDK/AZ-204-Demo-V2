@@ -21,6 +21,25 @@ $web_package_path = "$repo_root/.deploy/lp09/web/app.zip"
 $functions_project_path = "$repo_root/$functions_project_dir/$functions_project_name.csproj"
 $functions_publish_path = "$repo_root/.deploy/lp09/functions/publish"
 $functions_zip_path = "$repo_root/.deploy/lp09/functions/functions.zip"
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+function New-ZipFromDirectory {
+    param(
+        [Parameter(Mandatory = $true)][string]$SourceDirectory,
+        [Parameter(Mandatory = $true)][string]$DestinationZipPath
+    )
+
+    if (Test-Path -LiteralPath $DestinationZipPath) {
+        Remove-Item -LiteralPath $DestinationZipPath -Force
+    }
+
+    [System.IO.Compression.ZipFile]::CreateFromDirectory(
+        $SourceDirectory,
+        $DestinationZipPath,
+        [System.IO.Compression.CompressionLevel]::Optimal,
+        $false
+    )
+}
 $subscription_id = "$(az account show --query id -o tsv)"
 $existing_namespace_name = "$(az eventhubs namespace list  --resource-group `"$resource_group_name`"  --query `"[?name=='$eventhub_namespace_name'].name | [0]`"  -o tsv)"
 if ([string]::IsNullOrEmpty($existing_namespace_name)) {
@@ -55,16 +74,26 @@ try {
 if (Test-Path "$functions_publish_path") { Remove-Item -Recurse -Force "$functions_publish_path" }
 New-Item -ItemType Directory -Path "$functions_publish_path" -Force | Out-Null
 dotnet publish "$functions_project_path" -c Release -o "$functions_publish_path"
-if (Test-Path "$functions_zip_path") { Remove-Item -Force "$functions_zip_path" }
-Push-Location "$functions_publish_path"
-try {
-    if (Test-Path "$functions_zip_path") { Remove-Item -Force "$functions_zip_path" }
-    Compress-Archive -Path (Join-Path "$functions_publish_path" '*') -DestinationPath "$functions_zip_path" -Force
-} finally {
-    Pop-Location
-}
+New-ZipFromDirectory -SourceDirectory "$functions_publish_path" -DestinationZipPath "$functions_zip_path"
 az functionapp deployment source config-zip  --resource-group "$resource_group_name"  --name "$function_app_name"  --src "$functions_zip_path"
-$function_resource_id = "/subscriptions/$subscription_id/resourceGroups/$resource_group_name/providers/Microsoft.Web/sites/$function_app_name/functions/SlideUploadedEvent"
+
+$function_name = "SlideUploadedEvent"
+$function_found = $false
+for ($attempt = 1; $attempt -le 18; $attempt++) {
+    try {
+        $null = az functionapp function show --resource-group "$resource_group_name" --name "$function_app_name" --function-name "$function_name" --query name -o tsv
+        $function_found = $true
+        break
+    } catch {
+        Write-Host "Waiting for function '$function_name' to be discoverable (attempt $attempt/18)..."
+        Start-Sleep -Seconds 10
+    }
+}
+if (-not $function_found) {
+    throw "Function '$function_name' was not found in '$function_app_name' after deployment."
+}
+
+$function_resource_id = "/subscriptions/$subscription_id/resourceGroups/$resource_group_name/providers/Microsoft.Web/sites/$function_app_name/functions/$function_name"
 $storage_account_id = "$(az storage account show --name `"$slides_storage_account_name`" --resource-group `"$resource_group_name`" --query id -o tsv)"
 $existing_subscription_name = "$(az eventgrid event-subscription list  --source-resource-id `"$storage_account_id`"  --query `"[?name=='$eventgrid_subscription_name'].name | [0]`"  -o tsv)"
 if ([string]::IsNullOrEmpty($existing_subscription_name)) {
@@ -73,14 +102,7 @@ if ([string]::IsNullOrEmpty($existing_subscription_name)) {
 if (Test-Path "$web_publish_dir") { Remove-Item -Recurse -Force "$web_publish_dir" }
 New-Item -ItemType Directory -Path "$web_publish_dir" -Force | Out-Null
 dotnet publish "$project_dir/ConferenceHub.csproj" -c Release -o "$web_publish_dir"
-if (Test-Path "$web_package_path") { Remove-Item -Force "$web_package_path" }
-Push-Location "$web_publish_dir"
-try {
-    if (Test-Path "$web_package_path") { Remove-Item -Force "$web_package_path" }
-    Compress-Archive -Path (Join-Path "$web_publish_dir" '*') -DestinationPath "$web_package_path" -Force
-} finally {
-    Pop-Location
-}
+New-ZipFromDirectory -SourceDirectory "$web_publish_dir" -DestinationZipPath "$web_package_path"
 az webapp deploy  --resource-group "$resource_group_name"  --name "$web_app_name"  --src-path "$web_package_path"  --type zip
 az webapp restart  --resource-group "$resource_group_name"  --name "$web_app_name"
 az webapp browse  --resource-group "$resource_group_name"  --name "$web_app_name"
