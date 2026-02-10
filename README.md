@@ -20,7 +20,7 @@ If you find problems or improvement opportunities, please:
 - .NET SDK 9
 - Azure CLI (`az`) logged in
 - Bash (macOS/Linux)
-- Docker (required for LP5 `lp/05-container`, and Docker must be running)
+- Docker (required for LP5 `lp/05-container`, and Docker must be running, or the step will fail)
 
 ## Repository Layout
 - `ConferenceHub/`: shared ASP.NET Core web app used across all LPs.
@@ -53,14 +53,14 @@ git fetch --all --prune
 
 Per LP, switch branch and run the script:
 
+Use 'git branch' to see what each LearningPath is called
+
 ```bash
 git switch lp/01-init || git switch --track origin/lp/01-init
 cd LearningPath/01-Init
 ./create.sh
 cd ../..
 ```
-
-Repeat with the matching branch/folder for LP2, LP3, ..., LP11.
 
 ## Full Deployment Script
 Use this to deploy all LPs in sequence automatically:
@@ -76,7 +76,7 @@ What it does:
 - Opens browser once at the end.
 
 ## Cleanup Script
-Use this to remove demo resources when finished:
+Use this to remove demo resources when finished, takes some time due to deleting CosmosDB is slow, and purging the KeyVault:
 
 ```bash
 ./cleanup.sh
