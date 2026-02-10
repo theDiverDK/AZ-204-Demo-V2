@@ -6,6 +6,12 @@ cd "$script_dir"
 
 git fetch --all --prune
 
+clean_artifacts() {
+  rm -rf "$script_dir/ConferenceHub/publish"
+  rm -f "$script_dir/ConferenceHub/app.zip"
+  rm -rf "$script_dir/.deploy"
+}
+
 run_lp() {
   local branch="$1"
   local folder="$2"
@@ -14,6 +20,8 @@ run_lp() {
   echo "========== Running ${branch} (${folder}) =========="
 
   git switch "$branch" || git switch --track "origin/$branch"
+
+  clean_artifacts
 
   cd "$folder"
   ./create.sh
