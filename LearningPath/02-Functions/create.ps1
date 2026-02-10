@@ -36,7 +36,37 @@ function New-ZipFromDirectory {
 # LP2 assumes LP1 already created RG/App Service Plan/Web App.
 # Only create new Function resources, then update/deploy existing apps.
 az storage account create  --name "$storage_account_name"  --resource-group "$resource_group_name"  --location "$location"  --sku Standard_LRS  --kind StorageV2  --min-tls-version TLS1_2
-az functionapp create  --name "$function_app_name"  --resource-group "$resource_group_name"  --consumption-plan-location "$location"  --storage-account "$storage_account_name"  --functions-version 4  --runtime "$function_runtime"  --runtime-version "$function_runtime_version"
+$workspaceExists = az monitor log-analytics workspace list `
+  --resource-group "$resource_group_name" `
+  --query "[?name=='$log_analytics_workspace_name'] | length(@)" `
+  -o tsv
+if ($workspaceExists -eq '0') {
+    az monitor log-analytics workspace create `
+      --resource-group "$resource_group_name" `
+      --workspace-name "$log_analytics_workspace_name" `
+      --location "$location"
+}
+
+$workspaceId = az monitor log-analytics workspace show `
+  --resource-group "$resource_group_name" `
+  --workspace-name "$log_analytics_workspace_name" `
+  --query id `
+  -o tsv
+
+$appInsightsExists = az monitor app-insights component list `
+  --resource-group "$resource_group_name" `
+  --query "[?name=='$function_app_insights_name'] | length(@)" `
+  -o tsv
+if ($appInsightsExists -eq '0') {
+    az monitor app-insights component create `
+      --app "$function_app_insights_name" `
+      --location "$location" `
+      --resource-group "$resource_group_name" `
+      --workspace "$workspaceId" `
+      --application-type web
+}
+
+az functionapp create  --name "$function_app_name"  --resource-group "$resource_group_name"  --consumption-plan-location "$location"  --storage-account "$storage_account_name"  --app-insights "$function_app_insights_name"  --functions-version 4  --runtime "$function_runtime"  --runtime-version "$function_runtime_version"
 az functionapp config set  --resource-group "$resource_group_name"  --name "$function_app_name"  --min-tls-version 1.2
 az webapp config set  --resource-group "$resource_group_name"  --name "$web_app_name"  --min-tls-version 1.2
 az functionapp config appsettings set  --resource-group "$resource_group_name"  --name "$function_app_name"  --settings  FUNCTIONS_WORKER_RUNTIME="$function_worker_runtime"  CONFIRMATION_SENDER_EMAIL="$confirmation_sender_email"

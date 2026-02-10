@@ -27,11 +27,34 @@ az storage account create \
   --kind StorageV2 \
   --min-tls-version TLS1_2
 
+if ! az monitor log-analytics workspace show --resource-group "$resource_group_name" --workspace-name "$log_analytics_workspace_name" >/dev/null 2>&1; then
+  az monitor log-analytics workspace create \
+    --resource-group "$resource_group_name" \
+    --workspace-name "$log_analytics_workspace_name" \
+    --location "$location"
+fi
+
+workspace_id="$(az monitor log-analytics workspace show \
+  --resource-group "$resource_group_name" \
+  --workspace-name "$log_analytics_workspace_name" \
+  --query id \
+  -o tsv)"
+
+if ! az monitor app-insights component show --app "$function_app_insights_name" --resource-group "$resource_group_name" >/dev/null 2>&1; then
+  az monitor app-insights component create \
+    --app "$function_app_insights_name" \
+    --location "$location" \
+    --resource-group "$resource_group_name" \
+    --workspace "$workspace_id" \
+    --application-type web
+fi
+
 az functionapp create \
   --name "$function_app_name" \
   --resource-group "$resource_group_name" \
   --consumption-plan-location "$location" \
   --storage-account "$storage_account_name" \
+  --app-insights "$function_app_insights_name" \
   --functions-version 4 \
   --runtime "$function_runtime" \
   --runtime-version "$function_runtime_version"
